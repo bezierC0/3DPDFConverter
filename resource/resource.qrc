@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>icon/version.svg</file>
+        <file>icon/logo.ico</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file>images/logo.png</file>
+    </qresource>
+    <qresource prefix="/qss">
+        <file>qss/light.qss</file>
+        <file>qss/dark.qss</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,93 @@
+# VSCode
+.vscode/
+.history/
+.promptx/
+
+# cache
+.cache/
+
+# Build directories
+build/
+bin/
+lib/
+out/
+install/
+_build/
+_install/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CMakeUserPresets.json
+CTestTestfile.cmake
+Testing/
+*.cmake
+
+# Backup/Temp files
+*.bak
+*.tmp
+*.swp
+*~
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+*.res
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+*.tlb
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+*.exp
+*.pdb
+*.idb
+*.ilk
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Qt
+moc_*
+ui_*
+qrc_*
+debug/
+release/
+Makefile*
+
+# OpenCASCADE
+*.brep
+*.step
+*.stp
+*.iges
+*.igs
+
+# Test artifacts
+*.pdf
+test_output/
+
+# vcpkg
+vcpkg_installed/
+.vcpkg-root
+
+# Logs
+*.log
+logs/
