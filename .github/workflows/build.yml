@@ -15,7 +15,7 @@ jobs:
       OCC_VERSION: '7.8.0'
       OCC_VERSION_TAG: 'V7_8_0'
       OCC_ZIP_sha256: '82afb7bd5fd7097189ee4e98bf3bc02b4030cae7a82967db68d5f2b556801779'
-      VS_VERSION: 'Visual Studio 16 2019'
+      VS_VERSION: 'Visual Studio 17 2022'
       QT_ROOT: 'C:\Qt'
       OCC_ROOT: 'C:\opencascade'
       VCPKG_ROOT: 'C:\vcpkg'

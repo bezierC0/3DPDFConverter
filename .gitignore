@@ -8,8 +8,8 @@
 
 # Build directories
 build/
-bin/
-lib/
+/bin/
+/lib/
 out/
 install/
 _build/
@@ -59,6 +59,12 @@ Testing/
 *.pdb
 *.idb
 *.ilk
+
+# Exempt 3rdparty binaries
+!3rdparty/**/*.lib
+!3rdparty/**/*.a
+!3rdparty/**/*.dll
+!3rdparty/**/*.pdb
 
 # Executables
 *.exe
