@@ -29,11 +29,7 @@ if(WIN32)
         debug ${CMAKE_SOURCE_DIR}/3rdparty/zlib/lib/zlibd.lib
     )
 else()
-    target_link_libraries(PrcExporter PRIVATE
-        ${CMAKE_SOURCE_DIR}/3rdparty/libPRC/lib/libPRC.a
-        ${CMAKE_SOURCE_DIR}/3rdparty/libPRC/lib/libasymptote.a
-        z
-    )
+    # libPRC is stubbed on non-Windows platforms, no precompiled libs are required to link
 endif()
 
 target_compile_definitions(PrcExporter PRIVATE

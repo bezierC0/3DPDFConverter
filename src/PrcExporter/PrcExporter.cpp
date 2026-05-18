@@ -1,8 +1,10 @@
 #include "PrcExporter.h"
 #include "CoreTypes.h"
-#include <oPRCFile.h>
 #include <exception>
 #include <string.h>
+
+#ifdef _WIN32
+#include <oPRCFile.h>
 #include <vector>
 #include <array>
 #include <sstream>
@@ -87,3 +89,23 @@ void FreePrc(HPrcData prc) {
 }
 
 } // extern "C"
+
+#else // Stub for non-Windows
+
+extern "C" {
+
+void WritePrc(HMeshData mesh, HPrcData* outPrc, ExportResult* outResult) {
+    if (!mesh || !outPrc || !outResult) return;
+    outResult->code = RESULT_PRC_ERROR;
+    CoreTypes::SafeStrCopy(outResult->errorMessage, "PRC generation is only supported on Windows.");
+    *outPrc = nullptr;
+}
+
+void FreePrc(HPrcData prc) {
+    // Nothing to free
+}
+
+} // extern "C"
+
+#endif // _WIN32
+
