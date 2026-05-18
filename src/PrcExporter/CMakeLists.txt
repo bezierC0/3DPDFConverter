@@ -25,14 +25,11 @@ if(WIN32)
         debug ${CMAKE_SOURCE_DIR}/3rdparty/libPRC/lib/libPRCd.lib
         optimized ${CMAKE_SOURCE_DIR}/3rdparty/libPRC/lib/asymptote.lib
         debug ${CMAKE_SOURCE_DIR}/3rdparty/libPRC/lib/asymptoted.lib
-        C:/Libs/OCCT/3rdparty-vc14-64/zlib-1.2.8-vc14-64/lib/zlib.lib
+        optimized ${CMAKE_SOURCE_DIR}/3rdparty/zlib/lib/zlib.lib
+        debug ${CMAKE_SOURCE_DIR}/3rdparty/zlib/lib/zlibd.lib
     )
 else()
-    target_link_libraries(PrcExporter PRIVATE
-        ${CMAKE_SOURCE_DIR}/3rdparty/libPRC/lib/libPRC.a
-        ${CMAKE_SOURCE_DIR}/3rdparty/libPRC/lib/libasymptote.a
-        z
-    )
+    # libPRC is stubbed on non-Windows platforms, no precompiled libs are required to link
 endif()
 
 target_compile_definitions(PrcExporter PRIVATE

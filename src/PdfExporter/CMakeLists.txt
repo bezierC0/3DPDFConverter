@@ -23,9 +23,7 @@ if(WIN32)
         ${CMAKE_SOURCE_DIR}/3rdparty/libharu-2.3.0/lib/libhpdf.lib
     )
 else()
-    target_link_libraries(PdfExporter PRIVATE
-        ${CMAKE_SOURCE_DIR}/3rdparty/libharu-2.3.0/lib/libhpdf.a
-    )
+    # libharu is stubbed on non-Windows platforms, no precompiled libs are required to link
 endif()
 
 target_compile_definitions(PdfExporter PRIVATE
