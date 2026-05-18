@@ -14,7 +14,13 @@
 #include <V3d_Viewer.hxx>
 #include <Aspect_DisplayConnection.hxx>
 #include <OpenGl_GraphicDriver.hxx>
+#if defined(_WIN32)
 #include <WNT_Window.hxx>
+#elif defined(__APPLE__)
+#include <Cocoa_Window.hxx>
+#else
+#include <Xw_Window.hxx>
+#endif
 
 
 // Map Qt buttons bitmask to virtual keys.
@@ -270,7 +276,14 @@ void Occt3DView::initializeGL()
     Aspect_Handle aWindowHandle = (Aspect_Handle)winId();
 
     // Create the OCCT window wrapper
+#if defined(_WIN32)
     Handle(WNT_Window) aWindow = new WNT_Window(aWindowHandle);
+#elif defined(__APPLE__)
+    Handle(Cocoa_Window) aWindow = new Cocoa_Window((NSView*)aWindowHandle);
+#else
+    Handle(Aspect_DisplayConnection) aDisp = m_viewer->Driver()->GetDisplayConnection();
+    Handle(Xw_Window) aWindow = new Xw_Window(aDisp, aWindowHandle);
+#endif
     m_view->SetWindow(aWindow);
 
     if (!aWindow->IsMapped())
