@@ -12,7 +12,12 @@ extern "C" {
 /**
  * @brief Converts triangulated mesh data into PRC binary format
  */
-PRCEXPORTER_EXPORT void WritePrc(HMeshData mesh, HPrcData* outPrc, ExportResult* outResult);
+PRCEXPORTER_EXPORT void WritePrc(
+    HMeshData mesh,
+    PrcSettings prcSettings,
+    MaterialSettings materialSettings,
+    HPrcData* outPrc,
+    ExportResult* outResult);
 
 /**
  * @brief Frees the resources associated with the PRC data

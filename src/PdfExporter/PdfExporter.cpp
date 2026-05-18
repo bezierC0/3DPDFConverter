@@ -16,6 +16,28 @@ struct PrcDataWrapper {
     std::string buffer;
 };
 
+namespace {
+struct PageSizePts {
+    HPDF_REAL width;
+    HPDF_REAL height;
+};
+
+PageSizePts resolvePageSize(const PdfSettings& settings) {
+    if (settings.pageSize && strcmp(settings.pageSize, "A3") == 0) return { 841.89f, 1190.55f };
+    if (settings.pageSize && strcmp(settings.pageSize, "Letter") == 0) return { 612.0f, 792.0f };
+    if (settings.pageSize && strcmp(settings.pageSize, "Legal") == 0) return { 612.0f, 1008.0f };
+    if (settings.pageSize && strcmp(settings.pageSize, "Custom") == 0 &&
+        settings.customPageWidthPt > 0.0 && settings.customPageHeightPt > 0.0) {
+        return { static_cast<HPDF_REAL>(settings.customPageWidthPt), static_cast<HPDF_REAL>(settings.customPageHeightPt) };
+    }
+    return { 595.0f, 842.0f };
+}
+
+const char* resolveLighting(const PdfSettings& settings) {
+    return (settings.defaultLighting && settings.defaultLighting[0] != '\0') ? settings.defaultLighting : "White";
+}
+}
+
 extern "C" {
 
 static void hpdfErrorHandler(HPDF_STATUS error_no, HPDF_STATUS detail_no, void* /*user_data*/) {
@@ -58,11 +80,18 @@ void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, E
 
         HPDF_3DView_SetCamera(view,
             cx, cy, cz,          // centre of orbit (coo)
-            0, 0, 1,             // c2c vector (camera-to-centre direction)
-            roo,                 // radius of orbit
-            0.0f);               // roll angle
+            static_cast<HPDF_REAL>(settings.cameraToCenter[0]),
+            static_cast<HPDF_REAL>(settings.cameraToCenter[1]),
+            static_cast<HPDF_REAL>(settings.cameraToCenter[2]),
+            static_cast<HPDF_REAL>(settings.orbitRadius > 0.0 ? settings.orbitRadius : roo),
+            static_cast<HPDF_REAL>(settings.rollDeg));
 
-        HPDF_3DView_SetPerspectiveProjection(view, 30.0f); 
+        if (settings.projectionMode == PDF_PROJ_ORTHOGRAPHIC) {
+            HPDF_3DView_SetOrthogonalProjection(view, 1.0f);
+        } else {
+            const HPDF_REAL fov = static_cast<HPDF_REAL>(settings.fovDeg > 0.0 ? settings.fovDeg : 30.0);
+            HPDF_3DView_SetPerspectiveProjection(view, fov);
+        }
 
         // Extract background color from settings (0xRRGGBB)
         float r = ((settings.backgroundColorRGB >> 16) & 0xFF) / 255.0f;
@@ -70,16 +99,22 @@ void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, E
         float b = (settings.backgroundColorRGB & 0xFF) / 255.0f;
 
         HPDF_3DView_SetBackgroundColor(view, r, g, b);
-        HPDF_3DView_SetLighting(view, "White");
+        HPDF_3DView_SetLighting(view, resolveLighting(settings));
 
         HPDF_U3D_Add3DView(u3d, view);
         HPDF_U3D_SetDefault3DView(u3d, "Default");
 
         HPDF_Page page = HPDF_AddPage(pdf);
-        HPDF_Page_SetWidth(page, 595.0f);  // A4 pts
-        HPDF_Page_SetHeight(page, 842.0f);
+        const PageSizePts pageSize = resolvePageSize(settings);
+        HPDF_Page_SetWidth(page, pageSize.width);
+        HPDF_Page_SetHeight(page, pageSize.height);
 
-        HPDF_Rect rect = { 50.0f, 100.0f, 545.0f, 792.0f };
+        HPDF_Rect rect = {
+            static_cast<HPDF_REAL>(settings.annotLeftPt > 0.0 ? settings.annotLeftPt : 50.0),
+            static_cast<HPDF_REAL>(settings.annotBottomPt > 0.0 ? settings.annotBottomPt : 100.0),
+            static_cast<HPDF_REAL>(settings.annotRightPt > 0.0 ? settings.annotRightPt : (pageSize.width - 50.0f)),
+            static_cast<HPDF_REAL>(settings.annotTopPt > 0.0 ? settings.annotTopPt : (pageSize.height - 50.0f))
+        };
         HPDF_Page_Create3DAnnot(page, rect, u3d);
 
         if (HPDF_SaveToFile(pdf, outPdfPath) != HPDF_OK)
@@ -88,15 +123,17 @@ void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, E
         HPDF_Free(pdf);
         pdf = nullptr;
         
-        std::error_code ec;
-        std::filesystem::remove(tempPrcPath, ec);
+        if (!settings.keepTempPrc) {
+            std::error_code ec;
+            std::filesystem::remove(tempPrcPath, ec);
+        }
 
         outResult->code = RESULT_SUCCESS;
         outResult->errorMessage[0] = '\0';
     } 
     catch (const std::exception& e) {
         if (pdf) HPDF_Free(pdf);
-        if (!tempPrcPath.empty()) {
+        if (!tempPrcPath.empty() && !settings.keepTempPrc) {
             std::error_code ec;
             std::filesystem::remove(tempPrcPath, ec);
         }
@@ -106,7 +143,7 @@ void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, E
     }
     catch (...) {
         if (pdf) HPDF_Free(pdf);
-        if (!tempPrcPath.empty()) {
+        if (!tempPrcPath.empty() && !settings.keepTempPrc) {
             std::error_code ec;
             std::filesystem::remove(tempPrcPath, ec);
         }
@@ -131,4 +168,3 @@ void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, E
 } // extern "C"
 
 #endif // _WIN32
-

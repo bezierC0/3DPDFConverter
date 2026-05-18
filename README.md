@@ -30,3 +30,29 @@ cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=[Your vcpkg path]/scripts/bu
 # Build
 cmake --build build
 ```
+
+## CLI Usage
+`3DPDFConverterCLI` supports direct STEP to 3D PDF export with basic and advanced options.
+
+```bash
+3DPDFConverterCLI <input.step> <output.pdf> [options]
+```
+
+Options:
+- `--help`, `-h`: Show help and exit
+- `--page-size <A4|A3|Letter|Legal>`
+- `--bg-color <RRGGBB>`
+- `--projection <perspective|orthographic>`
+- `--fov <deg>`
+- `--roll <deg>`
+- `--radius <value>`
+- `--deflection <value>`
+- `--compression <0..1>`
+- `--granularity <0..1>`
+- `--keep-temp-prc`
+
+Example:
+
+```bash
+3DPDFConverterCLI part.step part.pdf --page-size A3 --projection orthographic --bg-color DFE8FF --deflection 0.005
+```

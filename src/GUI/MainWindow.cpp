@@ -13,6 +13,7 @@
 #include <QStyle>
 #include <QVBoxLayout>
 #include <QSplitter>
+#include <cstdlib>
 
 #include "ExportFacade.h"
 
@@ -208,6 +209,10 @@ void MainWindow::onExportPdf() {
     free((void*)request.pdfSettings.pageSize);
     free((void*)request.pdfSettings.defaultLighting);
     free((void*)request.pdfSettings.defaultView);
+    free((void*)request.pdfMetadata.title);
+    free((void*)request.pdfMetadata.author);
+    free((void*)request.pdfMetadata.subject);
+    free((void*)request.pdfMetadata.keywords);
 
     if (result.code == RESULT_SUCCESS) {
         statusBar()->showMessage("PDF Export Successful");

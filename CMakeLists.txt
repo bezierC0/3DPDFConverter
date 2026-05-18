@@ -91,32 +91,32 @@ message(STATUS "OpenCASCADE library: ${OpenCASCADE_LIBRARY_DIR}")
 message(STATUS "OpenCASCADE include: ${OpenCASCADE_INCLUDE_DIR}")
 message(STATUS "OpenCASCADE 3rdparty: ${OpenCASCADE_3RDPARTY_DIR}")
 
-# Define OpenCASCADE toolkits
-set(
-    OpenCASCADE_TOOLKITS
-    # FoundationClasses
+# Define minimal OpenCASCADE toolkit set based on actual project usage:
+# - STEP/IGES XDE import/export (CadProcessor, StepReader)
+# - Meshing/topology checks/fixing (MeshGenerator, CadProcessor)
+# - 3D visualization widgets (AIS/V3d/OpenGl)
+set(OpenCASCADE_TOOLKITS
+    # Foundation
     TKernel TKMath
-    # ModelingData
-    TKG2d TKG3d TKGeomBase TKBRep
-    # ModelingAlgorithms
-    TKMesh TKShHealing TKTopAlgo
+    # Modeling data + topology/mesh/healing
+    TKG2d TKG3d TKGeomBase TKGeomAlgo TKBRep TKTopAlgo TKMesh TKShHealing TKBool TKPrim TKHLR
     # Visualization
-    TKOpenGl TKService TKV3d
-    # ApplicationFramework
-    TKCAF TKCDF TKLCAF TKVCAF
-    # DataExchange
-    TKXCAF TKXSBase
+    TKService TKV3d TKOpenGl
+    # XDE application framework
+    TKCDF TKLCAF TKCAF TKVCAF TKXCAF
+    # Data exchange base
+    TKXSBase
+    TKBO
 )
 
 # Add version-specific toolkits
 if(OpenCASCADE_VERSION VERSION_GREATER_EQUAL 7.8.0)
+    # OCCT 7.8+: unified DE toolkits used by STEP/IGES CAF readers/writers
     list(APPEND OpenCASCADE_TOOLKITS TKDE TKDEIGES TKDESTEP)
 else()
+    # OCCT < 7.8: legacy STEP/IGES toolkits
     list(APPEND OpenCASCADE_TOOLKITS TKIGES TKXDEIGES)
     list(APPEND OpenCASCADE_TOOLKITS TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKXDESTEP)
-    if(OpenCASCADE_VERSION VERSION_GREATER_EQUAL 7.7.0)
-        list(APPEND OpenCASCADE_TOOLKITS TKXDE)
-    endif()
 endif()
 
 # Build library list
@@ -138,7 +138,17 @@ endif()
 
 # Find OpenCASCADE DLLs on Windows
 if(WIN32)
-    file(GLOB OpenCASCADE_TOOLKITS_DLLS "${OpenCASCADE_BINARY_DIR}/*.dll")
+    # Copy only DLLs for linked OpenCASCADE toolkits (instead of all DLLs in bin/)
+    set(OpenCASCADE_TOOLKITS_DLLS "")
+    foreach(OccTK ${OpenCASCADE_TOOLKITS})
+        set(CURRENT_OCCT_DLL "${OpenCASCADE_BINARY_DIR}/${OccTK}.dll")
+        if(EXISTS "${CURRENT_OCCT_DLL}")
+            list(APPEND OpenCASCADE_TOOLKITS_DLLS "${CURRENT_OCCT_DLL}")
+        endif()
+    endforeach()
+    list(REMOVE_DUPLICATES OpenCASCADE_TOOLKITS_DLLS)
+    list(LENGTH OpenCASCADE_TOOLKITS_DLLS OCCT_TOOLKIT_DLL_COUNT)
+    message(STATUS "Found ${OCCT_TOOLKIT_DLL_COUNT} OpenCASCADE toolkit DLLs to copy")
 
     # 3RDPARTY DLLs
     file(GLOB FREETYPE_DIRS "${OpenCASCADE_3RDPARTY_DIR}/freetype*")
@@ -169,6 +179,7 @@ if(WIN32)
     file(GLOB 3RDPARTY_MODULE_OPENVR_DIR "${OpenCASCADE_3RDPARTY_DIR}/openvr*")
     file(GLOB OPENVR_DLLS_IN_BIN "${3RDPARTY_MODULE_OPENVR_DIR}/bin/win64/*.dll")
     list(APPEND OpenCASCADE_3RDPARTY_DLLS ${OPENVR_DLLS_IN_BIN})
+    list(REMOVE_DUPLICATES OpenCASCADE_3RDPARTY_DLLS)
 
     list(LENGTH OpenCASCADE_3RDPARTY_DLLS OCCT_3RDPARTY_DLL_COUNT)
     message(STATUS "Found ${OCCT_3RDPARTY_DLL_COUNT} 3rdparty DLLs")
