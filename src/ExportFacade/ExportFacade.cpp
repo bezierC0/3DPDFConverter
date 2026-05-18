@@ -13,7 +13,7 @@ extern "C" {
     void GenerateMesh(HStepModel model, MeshSettings settings, HMeshData* outMesh, ExportResult* outResult);
     void FreeMesh(HMeshData mesh);
     
-    void WritePrc(HMeshData mesh, HPrcData* outPrc, ExportResult* outResult);
+    void WritePrc(HMeshData mesh, PrcSettings prcSettings, MaterialSettings materialSettings, HPrcData* outPrc, ExportResult* outResult);
     void FreePrc(HPrcData prc);
     
     void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, ExportResult* outResult);
@@ -41,7 +41,7 @@ void ExportStepToPdf(ExportRequest request, ExportResult* outResult) {
         }
 
         // 3. Write PRC
-        WritePrc(meshData, &prcData, outResult);
+        WritePrc(meshData, request.prcSettings, request.materialSettings, &prcData, outResult);
         if (outResult->code != RESULT_SUCCESS) {
             FreeMesh(meshData);
             FreeStep(stepModel);

@@ -100,12 +100,14 @@ if(SOURCES)
         # Find libPRC and libharu DLLs
         file(GLOB 3DPDF_USE_LIBPRC_DLLS "${CMAKE_SOURCE_DIR}/3rdparty/libPRC/bin/*.dll")
         file(GLOB 3DPDF_USE_LIBHARU_DLLS "${CMAKE_SOURCE_DIR}/3rdparty/libharu-2.3.0/bin/*.dll")
+        file(GLOB 3DPDF_ZLIB_DLLS "${CMAKE_SOURCE_DIR}/3rdparty/zlib/bin/*.dll")
         
         set(ALL_DLLS_TO_COPY 
             ${OpenCASCADE_TOOLKITS_DLLS} 
             ${OpenCASCADE_3RDPARTY_DLLS}
             ${3DPDF_USE_LIBPRC_DLLS}
             ${3DPDF_USE_LIBHARU_DLLS}
+            ${3DPDF_ZLIB_DLLS}
         )
         if(ALL_DLLS_TO_COPY)
             add_custom_command(

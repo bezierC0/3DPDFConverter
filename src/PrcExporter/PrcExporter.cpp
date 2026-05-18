@@ -24,7 +24,7 @@ struct PrcDataWrapper {
 
 extern "C" {
 
-void WritePrc(HMeshData mesh, HPrcData* outPrc, ExportResult* outResult) {
+void WritePrc(HMeshData mesh, PrcSettings /*prcSettings*/, MaterialSettings materialSettings, HPrcData* outPrc, ExportResult* outResult) {
     if (!mesh || !outPrc || !outResult) return;
 
     try {
@@ -35,12 +35,12 @@ void WritePrc(HMeshData mesh, HPrcData* outPrc, ExportResult* outResult) {
         prcFile.begingroup("model");
 
         PRCmaterial mat(
-            RGBAColour(0.2, 0.2, 0.2, 1.0),
-            RGBAColour(0.6, 0.65, 0.8, 1.0),
-            RGBAColour(0.0, 0.0, 0.0, 1.0),
-            RGBAColour(0.8, 0.8, 0.8, 1.0),
-            1.0,
-            32.0
+            RGBAColour(materialSettings.ambient[0], materialSettings.ambient[1], materialSettings.ambient[2], materialSettings.ambient[3]),
+            RGBAColour(materialSettings.diffuse[0], materialSettings.diffuse[1], materialSettings.diffuse[2], materialSettings.diffuse[3]),
+            RGBAColour(materialSettings.emissive[0], materialSettings.emissive[1], materialSettings.emissive[2], materialSettings.emissive[3]),
+            RGBAColour(materialSettings.specular[0], materialSettings.specular[1], materialSettings.specular[2], materialSettings.specular[3]),
+            materialSettings.alpha,
+            materialSettings.shininess
         );
 
         for (const auto& part : meshData->parts) {
@@ -94,7 +94,7 @@ void FreePrc(HPrcData prc) {
 
 extern "C" {
 
-void WritePrc(HMeshData mesh, HPrcData* outPrc, ExportResult* outResult) {
+void WritePrc(HMeshData mesh, PrcSettings /*prcSettings*/, MaterialSettings /*materialSettings*/, HPrcData* outPrc, ExportResult* outResult) {
     if (!mesh || !outPrc || !outResult) return;
     outResult->code = RESULT_PRC_ERROR;
     CoreTypes::SafeStrCopy(outResult->errorMessage, "PRC generation is only supported on Windows.");
@@ -108,4 +108,3 @@ void FreePrc(HPrcData prc) {
 } // extern "C"
 
 #endif // _WIN32
-

@@ -2,6 +2,7 @@
 #define PDFEXPORTDIALOG_H
 
 #include <QDialog>
+#include <QColor>
 #include "ExportTypes.h"
 
 namespace Ui {
@@ -23,9 +24,15 @@ public:
 
 private slots:
     void onBrowse();
+    void onPickBackgroundColor();
+    void onToggleAdvanced();
 
 private:
+    void setupAdvancedUi();
+    static const char* Dup(const QString& value);
     Ui::PdfExportDialog* ui;
+    QColor m_backgroundColor;
+    QWidget* m_advancedPanel;
 };
 
 #endif // PDFEXPORTDIALOG_H
