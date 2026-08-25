@@ -44,9 +44,14 @@ message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 ####################################
 # Qt Configuration (for GUI)
 ####################################
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
+option(BUILD_GUI_VALIDATOR "Build the optional Qt GUI used to validate generated 3D PDFs" OFF)
+option(BUILD_CONVERTER_SHARED "Build the 3D PDF converter shared library" ON)
+option(BUILD_CONVERTER_CLI "Build the 3D PDF converter command-line application" ON)
+option(IS_COPY_DLLS "Copy OpenCASCADE and third-party runtime DLLs" ON)
+
+if(BUILD_CONVERTER_CLI AND NOT BUILD_CONVERTER_SHARED)
+    message(FATAL_ERROR "BUILD_CONVERTER_CLI requires BUILD_CONVERTER_SHARED")
+endif()
 
 set(RESOURCE_DIR "${CMAKE_SOURCE_DIR}/resource")
 
@@ -138,15 +143,8 @@ endif()
 
 # Find OpenCASCADE DLLs on Windows
 if(WIN32)
-    # Copy only DLLs for linked OpenCASCADE toolkits (instead of all DLLs in bin/)
-    set(OpenCASCADE_TOOLKITS_DLLS "")
-    foreach(OccTK ${OpenCASCADE_TOOLKITS})
-        set(CURRENT_OCCT_DLL "${OpenCASCADE_BINARY_DIR}/${OccTK}.dll")
-        if(EXISTS "${CURRENT_OCCT_DLL}")
-            list(APPEND OpenCASCADE_TOOLKITS_DLLS "${CURRENT_OCCT_DLL}")
-        endif()
-    endforeach()
-    list(REMOVE_DUPLICATES OpenCASCADE_TOOLKITS_DLLS)
+    # Match the deployment strategy verified by the Qt_OCC project.
+    file(GLOB OpenCASCADE_TOOLKITS_DLLS "${OpenCASCADE_BINARY_DIR}/*.dll")
     list(LENGTH OpenCASCADE_TOOLKITS_DLLS OCCT_TOOLKIT_DLL_COUNT)
     message(STATUS "Found ${OCCT_TOOLKIT_DLL_COUNT} OpenCASCADE toolkit DLLs to copy")
 
@@ -205,37 +203,36 @@ endif()
 ####################################
 # Qt Configuration
 ####################################
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets LinguistTools)
-
-if(Qt5_FOUND)
+if(BUILD_GUI_VALIDATOR)
+    find_package(Qt5 REQUIRED COMPONENTS Core Widgets LinguistTools)
     message(STATUS "Qt5 version: ${Qt5_VERSION}")
     message(STATUS "Qt5 directory: ${Qt5_DIR}")
-else()
-    message(FATAL_ERROR "Qt5 not found")
 endif()
 
 ####################################
 # Module Subdirectories
 ####################################
-message(STATUS "Configuring modular DLL architecture...")
+message(STATUS "Configuring 3D PDF converter targets...")
 
-# Core modules (order matters for dependencies)
+# Converter library
 add_subdirectory(src/CoreTypes)
-add_subdirectory(src/Logger)
-add_subdirectory(src/StepReader)
-add_subdirectory(src/MeshGenerator)
-add_subdirectory(src/PrcExporter)
-add_subdirectory(src/PdfExporter)
-add_subdirectory(src/ExportFacade)
+if(BUILD_CONVERTER_SHARED)
+    add_subdirectory(src/Converter)
+endif()
 
 # Client applications
-add_subdirectory(src/CLI)
-add_subdirectory(src/GUI)
+if(BUILD_CONVERTER_CLI)
+    add_subdirectory(src/CLI)
+endif()
+if(BUILD_GUI_VALIDATOR)
+    add_subdirectory(src/GUI)
+endif()
 
 # Tests
 option(BUILD_TESTS "Build unit and integration tests" OFF)
 if(BUILD_TESTS)
-#    add_subdirectory(tests)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
 
 
@@ -245,22 +242,30 @@ endif()
 ####################################
 include(GNUInstallDirs)
 
-# Install DLL modules
-install(TARGETS Logger StepReader MeshGenerator PrcExporter PdfExporter ExportFacade
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+# Install converter library
+if(BUILD_CONVERTER_SHARED)
+    install(TARGETS 3DPDFConverter
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+endif()
 
 # Install CLI executable
-install(TARGETS 3DPDFConverterCLI
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+if(BUILD_CONVERTER_CLI)
+    install(TARGETS 3DPDFConverterCLI
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()
 
 # Install headers
 install(DIRECTORY src/CoreTypes/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Step3DPdfConverter
     FILES_MATCHING PATTERN "*.h"
+)
+
+install(FILES src/Converter/3DPDFConverter.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Step3DPdfConverter
 )
 
 
@@ -276,7 +281,13 @@ message(STATUS "Project: ${PROJECT_NAME} ${PROJECT_VERSION}")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "OpenCASCADE: ${OpenCASCADE_VERSION}")
-message(STATUS "Qt5: ${Qt5_VERSION}")
+message(STATUS "Converter shared library: ${BUILD_CONVERTER_SHARED}")
+message(STATUS "Converter CLI: ${BUILD_CONVERTER_CLI}")
+message(STATUS "Copy runtime DLLs: ${IS_COPY_DLLS}")
+message(STATUS "GUI validator: ${BUILD_GUI_VALIDATOR}")
+if(BUILD_GUI_VALIDATOR)
+    message(STATUS "Qt5: ${Qt5_VERSION}")
+endif()
 message(STATUS "Build tests: ${BUILD_TESTS}")
 message(STATUS "========================================")
 message(STATUS "")

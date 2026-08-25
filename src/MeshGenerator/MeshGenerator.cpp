@@ -1,5 +1,6 @@
 #include "MeshGenerator.h"
 #include "CoreTypes.h"
+#include "ConversionData.h"
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRep_Tool.hxx>
 #include <TopExp_Explorer.hxx>
@@ -12,19 +13,8 @@
 #include <string.h>
 #include <vector>
 #include <array>
-
-struct StepModelWrapper {
-    TopoDS_Shape shape;
-};
-
-// Extracted Mesh Data wrapper
-struct MeshDataWrapper {
-    struct MeshPart {
-        std::vector<std::array<double, 3>> vertices;
-        std::vector<std::array<uint32_t, 3>> indices;
-    };
-    std::vector<MeshPart> parts;
-};
+#include <algorithm>
+#include <memory>
 
 extern "C" {
 
@@ -42,7 +32,7 @@ void GenerateMesh(HStepModel model, MeshSettings settings, HMeshData* outMesh, E
         BRepMesh_IncrementalMesh meshGen(stepModel->shape, defl, settings.relativeMesh, ang);
         meshGen.Perform();
         
-        MeshDataWrapper* wrapper = new MeshDataWrapper();
+        auto wrapper = std::make_unique<MeshDataWrapper>();
         
         // Extract the vertices and triangles from the OCC shape
         for (TopExp_Explorer ex(stepModel->shape, TopAbs_FACE); ex.More(); ex.Next()) {
@@ -60,6 +50,16 @@ void GenerateMesh(HStepModel model, MeshSettings settings, HMeshData* outMesh, E
             for (int i = 1; i <= nbNodes; ++i) {
                 gp_Pnt p = tri->Node(i).Transformed(loc);
                 part.vertices[i - 1] = { p.X(), p.Y(), p.Z() };
+                if (!wrapper->hasBounds) {
+                    wrapper->minimumBounds = part.vertices[i - 1];
+                    wrapper->maximumBounds = part.vertices[i - 1];
+                    wrapper->hasBounds = true;
+                } else {
+                    for (std::size_t axis = 0; axis < 3; ++axis) {
+                        wrapper->minimumBounds[axis] = std::min(wrapper->minimumBounds[axis], part.vertices[i - 1][axis]);
+                        wrapper->maximumBounds[axis] = std::max(wrapper->maximumBounds[axis], part.vertices[i - 1][axis]);
+                    }
+                }
             }
 
             part.indices.resize(nbTris);
@@ -73,8 +73,15 @@ void GenerateMesh(HStepModel model, MeshSettings settings, HMeshData* outMesh, E
             }
             wrapper->parts.push_back(std::move(part));
         }
+
+        if (wrapper->parts.empty()) {
+            *outMesh = nullptr;
+            outResult->code = RESULT_MESH_ERROR;
+            CoreTypes::SafeStrCopy(outResult->errorMessage, "The CAD model produced no triangles.");
+            return;
+        }
         
-        *outMesh = static_cast<HMeshData>(wrapper);
+        *outMesh = static_cast<HMeshData>(wrapper.release());
         outResult->code = RESULT_SUCCESS;
         outResult->errorMessage[0] = '\0';
     } 

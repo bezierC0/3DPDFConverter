@@ -1,58 +1,49 @@
 # 3DPDFConverter
 
-[English](README.md) | [中文](./doc/README_CN.md) | [日本語](./doc/README_JP.md) | [한국어](./doc/README_KO.md) | [русский](./doc/README_RU.md)
+3DPDFConverter converts STEP files into PRC-based 3D PDF documents. The conversion engine is delivered as a shared library, while a thin command-line application provides a simple process-based interface. An optional Qt GUI is available only for development and validation.
 
-This is a modular 3D PDF generation tool platform based on C++, OpenCASCADE, and libHaru.
+## Outputs
 
-## Features
-*   **STEP Parsing**: Read STEP/STP format files.
-*   **Meshing**: Generate triangular meshes using OpenCASCADE's `BRepMesh_IncrementalMesh` algorithm.
-*   **PRC Conversion**: Convert mesh data into PRC format for 3D data exchange.
-*   **PDF Export**: Embed PRC data using libHaru and output standard 3D PDFs.
-*   **Highly Decoupled**: Core functionalities are separated into multiple DLL modules (StepReader, MeshGenerator, PrcExporter, PdfExporter), providing safe C-style interfaces for easy integration across different languages and toolchains.
+- `3DPDFConverter.dll`: versioned C API for application integration.
+- `3DPDFConverterCLI.exe`: command-line interface that calls the same shared library.
+- `3DPDFConverterGUI.exe`: optional Qt validation application.
 
-## Module Structure
-- `CoreTypes`: Defines pure C structures and interface handles for cross-DLL communication.
-- `Logger`: Thread-safe logging component.
-- `StepReader`: Loads and parses STEP models.
-- `MeshGenerator`: Triangulates STEP BRep into meshes.
-- `PrcExporter`: Generates the PRC binary stream.
-- `PdfExporter`: Generates the final PDF file and embeds the 3D view.
-- `ExportFacade`: Provides a unified wrapper interface for one-click export.
-- `CLI`: Command-line execution entry point (`3DPDFConverterCLI.exe`).
+The converter core does not depend on Qt. OpenCASCADE is used for STEP reading and meshing, libPRC is used to create PRC data, and libHaru embeds the PRC stream into PDF.
 
-## Build Instructions
-This project uses CMake and vcpkg for dependency management:
-```bash
-# Generate project (including dependencies like GTest, libharu)
-cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=[Your vcpkg path]/scripts/buildsystems/vcpkg.cmake
+The shared-library API supports progress and log callbacks plus cooperative cancellation.
 
-# Build
-cmake --build build
+## Default build
+
+```powershell
+cmake -S . -B build `
+  -DOpenCASCADE_DIR=C:/Libs/OCCT/occt-7.8.0-vc14-64 `
+  -DOpenCASCADE_3RDPARTY_DIR=C:/Libs/OCCT/3rdparty-vc14-64 `
+  -DBUILD_CONVERTER_SHARED=ON `
+  -DBUILD_CONVERTER_CLI=ON `
+  -DBUILD_GUI_VALIDATOR=OFF
+
+cmake --build build --config Release
 ```
 
-## CLI Usage
-`3DPDFConverterCLI` supports direct STEP to 3D PDF export with basic and advanced options.
+Runtime DLL copying follows the deployment method already verified by the Qt_OCC project. Set `IS_COPY_DLLS=ON` to copy the OpenCASCADE and third-party runtime DLLs beside the CLI. Set it to `OFF` when the host application already provides the runtime environment.
 
-```bash
-3DPDFConverterCLI <input.step> <output.pdf> [options]
+## Quick CLI example
+
+```powershell
+3DPDFConverterCLI.exe input.step output.pdf `
+  --projection orthographic `
+  --bg-color DFE8FF `
+  --deflection 0.02
 ```
 
-Options:
-- `--help`, `-h`: Show help and exit
-- `--page-size <A4|A3|Letter|Legal>`
-- `--bg-color <RRGGBB>`
-- `--projection <perspective|orthographic>`
-- `--fov <deg>`
-- `--roll <deg>`
-- `--radius <value>`
-- `--deflection <value>`
-- `--compression <0..1>`
-- `--granularity <0..1>`
-- `--keep-temp-prc`
+JSON settings are supported with `--params`:
 
-Example:
-
-```bash
-3DPDFConverterCLI part.step part.pdf --page-size A3 --projection orthographic --bg-color DFE8FF --deflection 0.005
+```powershell
+3DPDFConverterCLI.exe input.step output.pdf --params settings.json
 ```
+
+See [English User Manual](doc/USER_MANUAL.md) for the complete build, CLI, JSON, DLL API, deployment, and validation instructions.
+
+## Current platform status
+
+The public API and core layout are designed for Windows, Linux, and macOS. The current bundled libPRC and modified libHaru binaries are Windows binaries, so working PRC-based 3D PDF generation is currently verified on Windows only. Linux and macOS require compatible builds of those dependencies before conversion can be enabled there.

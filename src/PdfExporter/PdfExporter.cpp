@@ -1,5 +1,6 @@
 #include "PdfExporter.h"
 #include "CoreTypes.h"
+#include "ConversionData.h"
 #include <exception>
 #include <string.h>
 
@@ -11,10 +12,9 @@
 #include <stdexcept>
 #include <filesystem>
 #include <cmath>
-
-struct PrcDataWrapper {
-    std::string buffer;
-};
+#include <atomic>
+#include <chrono>
+#include <sstream>
 
 namespace {
 struct PageSizePts {
@@ -36,14 +36,42 @@ PageSizePts resolvePageSize(const PdfSettings& settings) {
 const char* resolveLighting(const PdfSettings& settings) {
     return (settings.defaultLighting && settings.defaultLighting[0] != '\0') ? settings.defaultLighting : "White";
 }
+
+struct HpdfErrorState {
+    HPDF_STATUS errorNumber = HPDF_OK;
+    HPDF_STATUS detailNumber = 0;
+};
+
+std::filesystem::path makeTemporaryPrcPath(const std::filesystem::path& outputPath, bool keepTemporaryPrc) {
+    if (keepTemporaryPrc) {
+        std::filesystem::path keptPath = outputPath;
+        keptPath += ".prc";
+        return keptPath;
+    }
+
+    static std::atomic<unsigned long long> sequence { 0 };
+    const auto timestamp = std::chrono::steady_clock::now().time_since_epoch().count();
+    std::ostringstream fileName;
+    fileName << "3dpdfconverter-" << std::hex << timestamp << '-' << sequence.fetch_add(1) << ".prc";
+    return std::filesystem::temp_directory_path() / fileName.str();
+}
+
+void throwIfHpdfFailed(const HpdfErrorState& errorState) {
+    if (errorState.errorNumber == HPDF_OK) return;
+    throw std::runtime_error(
+        "libharu error: 0x" + std::to_string(static_cast<unsigned>(errorState.errorNumber)) +
+        " detail: " + std::to_string(static_cast<unsigned>(errorState.detailNumber)));
+}
 }
 
 extern "C" {
 
-static void hpdfErrorHandler(HPDF_STATUS error_no, HPDF_STATUS detail_no, void* /*user_data*/) {
-    throw std::runtime_error(
-        "libharu error: 0x" + std::to_string(static_cast<unsigned>(error_no)) +
-        "  detail: "        + std::to_string(static_cast<unsigned>(detail_no)));
+static void hpdfErrorHandler(HPDF_STATUS errorNumber, HPDF_STATUS detailNumber, void* userData) {
+    auto* errorState = static_cast<HpdfErrorState*>(userData);
+    if (errorState != nullptr) {
+        errorState->errorNumber = errorNumber;
+        errorState->detailNumber = detailNumber;
+    }
 }
 
 void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, ExportResult* outResult) {
@@ -51,13 +79,13 @@ void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, E
 
     HPDF_Doc pdf = nullptr;
     std::string tempPrcPath;
+    HpdfErrorState hpdfError;
     
     try {
         PrcDataWrapper* prcData = static_cast<PrcDataWrapper*>(prc);
         
-        // Write PRC to temp file
-        std::filesystem::path pdfP(outPdfPath);
-        tempPrcPath = (pdfP.parent_path() / "temp_model_prc.prc").string();
+        const std::filesystem::path pdfPath(outPdfPath);
+        tempPrcPath = makeTemporaryPrcPath(pdfPath, settings.keepTempPrc).string();
         
         {
             std::ofstream tempOut(tempPrcPath, std::ios::binary);
@@ -65,25 +93,38 @@ void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, E
             tempOut.write(prcData->buffer.data(), prcData->buffer.size());
         }
 
-        pdf = HPDF_New(hpdfErrorHandler, nullptr);
+        pdf = HPDF_New(hpdfErrorHandler, &hpdfError);
         if (!pdf) throw std::runtime_error("HPDF_New failed.");
 
         HPDF_U3D u3d = HPDF_LoadU3DFromFile(pdf, tempPrcPath.c_str());
+        throwIfHpdfFailed(hpdfError);
         if (!u3d) throw std::runtime_error("HPDF_LoadU3DFromFile failed.");
 
         HPDF_Dict view = HPDF_Create3DView(pdf->mmgr, "Default");
+        throwIfHpdfFailed(hpdfError);
         if (!view) throw std::runtime_error("HPDF_Create3DView failed.");
 
-        // Some basic view bounds calculation or defaults
-        const HPDF_REAL cx = 0, cy = 0, cz = 0;
-        const HPDF_REAL roo = 200.0f; 
+        HPDF_REAL cx = 0.0f;
+        HPDF_REAL cy = 0.0f;
+        HPDF_REAL cz = 0.0f;
+        HPDF_REAL modelRadius = 200.0f;
+        if (prcData->hasBounds) {
+            const double dx = prcData->maximumBounds[0] - prcData->minimumBounds[0];
+            const double dy = prcData->maximumBounds[1] - prcData->minimumBounds[1];
+            const double dz = prcData->maximumBounds[2] - prcData->minimumBounds[2];
+            cx = static_cast<HPDF_REAL>((prcData->minimumBounds[0] + prcData->maximumBounds[0]) * 0.5);
+            cy = static_cast<HPDF_REAL>((prcData->minimumBounds[1] + prcData->maximumBounds[1]) * 0.5);
+            cz = static_cast<HPDF_REAL>((prcData->minimumBounds[2] + prcData->maximumBounds[2]) * 0.5);
+            modelRadius = static_cast<HPDF_REAL>(std::sqrt(dx * dx + dy * dy + dz * dz));
+            if (modelRadius < 1.0e-3f) modelRadius = 100.0f;
+        }
 
         HPDF_3DView_SetCamera(view,
             cx, cy, cz,          // centre of orbit (coo)
             static_cast<HPDF_REAL>(settings.cameraToCenter[0]),
             static_cast<HPDF_REAL>(settings.cameraToCenter[1]),
             static_cast<HPDF_REAL>(settings.cameraToCenter[2]),
-            static_cast<HPDF_REAL>(settings.orbitRadius > 0.0 ? settings.orbitRadius : roo),
+            static_cast<HPDF_REAL>(settings.orbitRadius > 0.0 ? settings.orbitRadius : modelRadius),
             static_cast<HPDF_REAL>(settings.rollDeg));
 
         if (settings.projectionMode == PDF_PROJ_ORTHOGRAPHIC) {
@@ -116,9 +157,11 @@ void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, E
             static_cast<HPDF_REAL>(settings.annotTopPt > 0.0 ? settings.annotTopPt : (pageSize.height - 50.0f))
         };
         HPDF_Page_Create3DAnnot(page, rect, u3d);
+        throwIfHpdfFailed(hpdfError);
 
         if (HPDF_SaveToFile(pdf, outPdfPath) != HPDF_OK)
             throw std::runtime_error("HPDF_SaveToFile failed.");
+        throwIfHpdfFailed(hpdfError);
 
         HPDF_Free(pdf);
         pdf = nullptr;

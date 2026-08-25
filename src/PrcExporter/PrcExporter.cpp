@@ -1,5 +1,6 @@
 #include "PrcExporter.h"
 #include "CoreTypes.h"
+#include "ConversionData.h"
 #include <exception>
 #include <string.h>
 
@@ -8,19 +9,7 @@
 #include <vector>
 #include <array>
 #include <sstream>
-
-// Same definition as in MeshGenerator.cpp
-struct MeshDataWrapper {
-    struct MeshPart {
-        std::vector<std::array<double, 3>> vertices;
-        std::vector<std::array<uint32_t, 3>> indices;
-    };
-    std::vector<MeshPart> parts;
-};
-
-struct PrcDataWrapper {
-    std::string buffer;
-};
+#include <memory>
 
 extern "C" {
 
@@ -62,10 +51,13 @@ void WritePrc(HMeshData mesh, PrcSettings /*prcSettings*/, MaterialSettings mate
         prcFile.endgroup();
         prcFile.finish();
 
-        PrcDataWrapper* wrapper = new PrcDataWrapper();
+        auto wrapper = std::make_unique<PrcDataWrapper>();
         wrapper->buffer = out.str();
+        wrapper->hasBounds = meshData->hasBounds;
+        wrapper->minimumBounds = meshData->minimumBounds;
+        wrapper->maximumBounds = meshData->maximumBounds;
 
-        *outPrc = static_cast<HPrcData>(wrapper);
+        *outPrc = static_cast<HPrcData>(wrapper.release());
         outResult->code = RESULT_SUCCESS;
         outResult->errorMessage[0] = '\0';
     } 

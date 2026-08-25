@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "mesh": {
+    "deflection": 0.02,
+    "angleRadians": 0.5,
+    "relative": false
+  },
+  "pdf": {
+    "background": "DFE8FF",
+    "projection": "orthographic",
+    "rollDegrees": 0.0
+  },
+  "keepTemporaryPrc": false
+}
