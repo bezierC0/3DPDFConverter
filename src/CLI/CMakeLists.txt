@@ -13,8 +13,16 @@ find_path(RAPIDJSON_INCLUDE_DIR
     NAMES rapidjson/document.h
     HINTS ${OpenCASCADE_3RDPARTY_DIR}
     PATH_SUFFIXES include rapidjson-1.1.0/include
-    REQUIRED
 )
+
+if(NOT RAPIDJSON_INCLUDE_DIR)
+    message(FATAL_ERROR
+        "RapidJSON headers were not found. Install rapidjson-dev (Debian/Ubuntu), "
+        "brew install rapidjson (macOS), or set RAPIDJSON_INCLUDE_DIR to the "
+        "directory containing rapidjson/document.h."
+    )
+endif()
+
 target_include_directories(3DPDFConverterCLI PRIVATE ${RAPIDJSON_INCLUDE_DIR})
 
 if(MSVC)
