@@ -9,14 +9,12 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 30
     env:
-      QT_VERSION: '5.14.0'
-      QT_ARCH: 'win64_msvc2017_64'
       OCC_VERSION: '7.8.0'
       OCC_VERSION_TAG: 'V7_8_0'
       OCC_ZIP_sha256: '82afb7bd5fd7097189ee4e98bf3bc02b4030cae7a82967db68d5f2b556801779'
       VS_VERSION: 'Visual Studio 17 2022'
-      QT_ROOT: 'C:\Qt'
       OCC_ROOT: 'C:\opencascade'
       VCPKG_ROOT: 'C:\vcpkg'
     
@@ -24,21 +22,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Cache Qt
-      id: cache-qt
-      uses: actions/cache@v4
-      with:
-        path: ${{ env.QT_ROOT }}
-        key: ${{ runner.os }}-Qt-${{ env.QT_VERSION }}-${{ env.QT_ARCH }}
-        
-    - name: Install Qt 5.14.0
-      uses: jurplel/install-qt-action@v3
-      with:
-        version: ${{ env.QT_VERSION }}
-        arch: ${{ env.QT_ARCH }}
-        cached: ${{ steps.cache-qt.outputs.cache-hit }}
-        modules: 'qtcharts qtdatavis3d qtnetworkauth'
-        
     - name: Cache OpenCASCADE archive
       id: cache-occ
       uses: actions/cache@v4
@@ -83,10 +66,15 @@ jobs:
           cmake --version
           cmake .. ^
                 -DOpenCASCADE_DIR=${{github.workspace}}\occt-vc143-64 ^
-                -DOpenCASCADE_3RDPARTY_DIR=${{github.workspace}}\3rdparty-vc14-64
+                -DOpenCASCADE_3RDPARTY_DIR=${{github.workspace}}\3rdparty-vc14-64 ^
+                -DBUILD_TESTS=ON
           cmake --build . ^
                 --config Release ^
                 --parallel ${{steps.cpu-cores.outputs.count}}
+
+    - name: Test
+      shell: cmd
+      run: ctest --test-dir ${{github.workspace}}\build -C Release --output-on-failure
 
     - name: Upload Module
       if: failure()
@@ -109,23 +97,16 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-latest
-    env:
-      QT_VERSION: '5.14.0'
+    timeout-minutes: 30
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v3
-      with:
-        version: ${{ env.QT_VERSION }}
-        modules: 'qtcharts qtdatavis3d qtnetworkauth'
-        
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libocct-data-exchange-dev libocct-draw-dev libocct-foundation-dev libocct-modeling-algorithms-dev libocct-modeling-data-dev libocct-ocaf-dev libocct-visualization-dev libtbb-dev
+        sudo apt-get install -y libocct-data-exchange-dev libocct-draw-dev libocct-foundation-dev libocct-modeling-algorithms-dev libocct-modeling-data-dev libocct-ocaf-dev libocct-visualization-dev libtbb-dev rapidjson-dev
         
     - name: Configure CMake
       run: |
@@ -139,23 +120,16 @@ jobs:
         cmake --build . --config Release --parallel $(nproc)
 
   build-macos:
-    runs-on: macos-13
-    env:
-      QT_VERSION: '5.14.0'
+    runs-on: macos-15
+    timeout-minutes: 30
       
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v3
-      with:
-        version: ${{ env.QT_VERSION }}
-        modules: 'qtcharts qtdatavis3d qtnetworkauth'
-        
     - name: Install OpenCASCADE
       run: |
-        brew install opencascade tbb
+        brew install opencascade tbb rapidjson
         
     - name: Configure CMake
       run: |

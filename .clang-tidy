@@ -1,0 +1,63 @@
+Checks: >
+  -*,
+  readability-identifier-naming,
+
+  modernize-*
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+SystemHeaders: false
+
+CheckOptions:
+  # Namespace
+  - key:             readability-identifier-naming.NamespaceCase
+    value:           CamelCase
+
+  # Class & Struct
+  - key:             readability-identifier-naming.ClassCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.StructCase
+    value:           CamelCase
+
+  # Member Variables
+  # members(private and protected) 'm_' + camelBack
+  - key:             readability-identifier-naming.PrivateMemberCase
+    value:           camelBack
+  - key:             readability-identifier-naming.PrivateMemberPrefix
+    value:           'm_'
+  - key:             readability-identifier-naming.ProtectedMemberCase
+    value:           camelBack
+  - key:             readability-identifier-naming.ProtectedMemberPrefix
+    value:           'm_'
+
+  # Public(Struct) members 
+  # use CamelCase
+  - key:             readability-identifier-naming.PublicMemberCase
+    value:           CamelCase
+
+  # Functions & Methods
+  - key:             readability-identifier-naming.FunctionCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.MethodCase
+    value:           CamelCase
+
+  # Local Variables & Parameters
+  - key:             readability-identifier-naming.LocalVariableCase
+    value:           camelBack
+  - key:             readability-identifier-naming.ParameterCase
+    value:           camelBack
+
+  # Constants
+  # Global/macro UPPER_CASE
+  - key:             readability-identifier-naming.ConstantCase
+    value:           UPPER_CASE
+
+  # Enums & Enum Constants
+  - key:             readability-identifier-naming.EnumCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.EnumConstantCase
+    value:           CamelCase
+
+  # Macros
+  - key:             readability-identifier-naming.MacroDefinitionCase
+    value:           UPPER_CASE

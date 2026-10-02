@@ -1,5 +1,6 @@
 #include "StepReader.h"
 #include "CoreTypes.h"
+#include "ConversionData.h"
 #include <STEPControl_Reader.hxx>
 #include <TopoDS_Shape.hxx>
 #include <IFSelect_ReturnStatus.hxx>
@@ -7,11 +8,7 @@
 #include <exception>
 #include <string.h>
 #include <iostream>
-
-// Internal struct to hold the OCC BRep object, hidden from the ABI boundary
-struct StepModelWrapper {
-    TopoDS_Shape shape;
-};
+#include <memory>
 
 extern "C" {
 
@@ -40,9 +37,9 @@ void LoadStep(const char* filePath, HStepModel* outModel, ExportResult* outResul
         }
 
         // Allocate the wrapper struct on the heap and cast to the opaque handle
-        StepModelWrapper* wrapper = new StepModelWrapper();
+        auto wrapper = std::make_unique<StepModelWrapper>();
         wrapper->shape = shape;
-        *outModel = static_cast<HStepModel>(wrapper);
+        *outModel = static_cast<HStepModel>(wrapper.release());
         
         outResult->code = RESULT_SUCCESS;
         outResult->errorMessage[0] = '\0';

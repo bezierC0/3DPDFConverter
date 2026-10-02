@@ -84,8 +84,7 @@ if(SOURCES)
 
     target_link_libraries(3DPDFConverterGUI PRIVATE
         CoreApi
-        ExportFacade
-        Logger
+        3DPDFConverter
         Qt5::Widgets
         Qt5::Core
     )
@@ -93,10 +92,13 @@ if(SOURCES)
     set_target_properties(3DPDFConverterGUI PROPERTIES
         CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
+        AUTOMOC ON
+        AUTOUIC ON
+        AUTORCC ON
     )
 
     # Copy DLLs on Windows
-    if(WIN32)
+    if(WIN32 AND IS_COPY_DLLS)
         # Find libPRC and libharu DLLs
         file(GLOB 3DPDF_USE_LIBPRC_DLLS "${CMAKE_SOURCE_DIR}/3rdparty/libPRC/bin/*.dll")
         file(GLOB 3DPDF_USE_LIBHARU_DLLS "${CMAKE_SOURCE_DIR}/3rdparty/libharu-2.3.0/bin/*.dll")

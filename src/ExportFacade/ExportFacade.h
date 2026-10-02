@@ -6,6 +6,10 @@
 #include "ExportFacade_global.h"
 
 #ifdef __cplusplus
+struct ConversionCallbacks;
+#endif
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -16,6 +20,11 @@ EXPORTFACADE_EXPORT void ExportStepToPdf(ExportRequest request, ExportResult* ou
 
 #ifdef __cplusplus
 }
+
+void ExportStepToPdfWithCallbacks(
+    const ExportRequest& request,
+    ExportResult* outResult,
+    const ConversionCallbacks* callbacks);
 #endif
 
 #endif // EXPORTFACADE_H
