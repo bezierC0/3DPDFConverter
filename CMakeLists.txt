@@ -268,6 +268,41 @@ install(FILES src/Converter/3DPDFConverter.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/Step3DPdfConverter
 )
 
+install(FILES
+    README.md
+    CHANGELOG.md
+    LICENSE
+    THIRD_PARTY_NOTICES.md
+    DESTINATION .
+)
+
+install(DIRECTORY licenses/
+    DESTINATION licenses
+)
+
+if(WIN32)
+    if(EXISTS "${OpenCASCADE_DIR}/LICENSE_LGPL_21.txt")
+        install(FILES "${OpenCASCADE_DIR}/LICENSE_LGPL_21.txt"
+            DESTINATION licenses
+            RENAME OpenCASCADE-LGPL-2.1.txt
+        )
+    endif()
+    if(EXISTS "${OpenCASCADE_DIR}/OCCT_LGPL_EXCEPTION.txt")
+        install(FILES "${OpenCASCADE_DIR}/OCCT_LGPL_EXCEPTION.txt"
+            DESTINATION licenses
+            RENAME OpenCASCADE-LGPL-exception.txt
+        )
+    endif()
+
+    set(CPACK_GENERATOR "ZIP")
+    set(CPACK_PACKAGE_NAME "3DPDFConverter")
+    set(CPACK_PACKAGE_VENDOR "littleCatBaby")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "STEP to PRC-based 3D PDF converter")
+    set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+    set(CPACK_PACKAGE_FILE_NAME "3DPDFConverter-${PROJECT_VERSION}-windows-x64")
+    include(CPack)
+endif()
+
 
 
 ####################################

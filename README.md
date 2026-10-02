@@ -1,5 +1,7 @@
 # 3DPDFConverter
 
+Current release: **0.1.0 prerelease**. Windows x64 is the only platform currently verified for complete STEP-to-3D-PDF conversion.
+
 3DPDFConverter converts STEP files into PRC-based 3D PDF documents. The conversion engine is delivered as a shared library, while a thin command-line application provides a simple process-based interface. An optional Qt GUI is available only for development and validation.
 
 ## Outputs

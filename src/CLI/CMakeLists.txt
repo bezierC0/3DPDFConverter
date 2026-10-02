@@ -5,6 +5,10 @@ target_sources(3DPDFConverterCLI PRIVATE
     main.cpp
 )
 
+if(WIN32)
+    target_sources(3DPDFConverterCLI PRIVATE ${CMAKE_BINARY_DIR}/version.rc)
+endif()
+
 target_include_directories(3DPDFConverterCLI PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -24,6 +28,10 @@ if(NOT RAPIDJSON_INCLUDE_DIR)
 endif()
 
 target_include_directories(3DPDFConverterCLI PRIVATE ${RAPIDJSON_INCLUDE_DIR})
+
+target_compile_definitions(3DPDFConverterCLI PRIVATE
+    THREEDPDFCONVERTER_VERSION="${PROJECT_VERSION}"
+)
 
 if(MSVC)
     target_compile_definitions(3DPDFConverterCLI PRIVATE
@@ -59,6 +67,9 @@ if(WIN32 AND IS_COPY_DLLS)
     )
     list(REMOVE_DUPLICATES ALL_CONVERTER_DLLS_TO_COPY)
 
+    set(RELEASE_CONVERTER_DLLS ${ALL_CONVERTER_DLLS_TO_COPY})
+    list(FILTER RELEASE_CONVERTER_DLLS EXCLUDE REGEX "(libPRCd|zlibd|.*_debug)\\.dll$")
+
     if(ALL_CONVERTER_DLLS_TO_COPY)
         add_custom_command(
             TARGET 3DPDFConverterCLI POST_BUILD
@@ -69,4 +80,8 @@ if(WIN32 AND IS_COPY_DLLS)
             COMMENT "Copying OpenCASCADE and third-party runtime DLLs"
         )
     endif()
+
+    install(FILES ${RELEASE_CONVERTER_DLLS}
+        DESTINATION bin
+    )
 endif()

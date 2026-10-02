@@ -249,7 +249,8 @@ int main(int argc, char* argv[])
         }
         if (firstArgument == "--version")
         {
-            std::cout << "3DPDFConverter API " << Converter_GetApiVersion() << '\n';
+            std::cout << "3DPDFConverter " << THREEDPDFCONVERTER_VERSION
+                      << " (API " << Converter_GetApiVersion() << ")\n";
             return 0;
         }
     }

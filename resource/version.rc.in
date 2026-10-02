@@ -17,12 +17,12 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "My Company"
-            VALUE "FileDescription", "3DPDFConverter Application"
+            VALUE "CompanyName", "littleCatBaby"
+            VALUE "FileDescription", "3DPDFConverter Command-line Application"
             VALUE "FileVersion", "@PROJECT_VERSION@"
             VALUE "InternalName", "@PROJECT_NAME@"
-            VALUE "LegalCopyright", "Copyright (C) 2025"
-            VALUE "OriginalFilename", "@PROJECT_NAME@.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2026 littleCatBaby"
+            VALUE "OriginalFilename", "3DPDFConverterCLI.exe"
             VALUE "ProductName", "3DPDFConverter"
             VALUE "ProductVersion", "@PROJECT_VERSION@"
         END
