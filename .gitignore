@@ -85,6 +85,7 @@ Makefile*
 *.stp
 *.iges
 *.igs
+!tests/testdata/*.step
 
 # Test artifacts
 *.pdf
