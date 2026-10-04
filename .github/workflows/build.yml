@@ -123,9 +123,11 @@ jobs:
         
     - name: Build
       run: |
+        set +e
         set -o pipefail
         cmake --build build --config Release --parallel $(nproc) 2>&1 | tee build/linux-build.log
         status=${PIPESTATUS[0]}
+        set -e
         if [ "$status" -ne 0 ]; then
           tail -n 30 build/linux-build.log | while IFS= read -r line; do
             echo "::error title=Linux build output::$line"
