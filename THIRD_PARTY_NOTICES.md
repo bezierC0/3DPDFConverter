@@ -15,6 +15,7 @@ The Windows package includes the license and exception files supplied by the Ope
 
 - Project: Asymptote PRC writer
 - Source: https://github.com/vectorgraphics/asymptote
+- Linux source revision: Asymptote 3.15 (`e4f9fe80bff8b20110aefa559b81eefc7e864781`)
 - License: GNU Lesser General Public License 3.0 or later
 - Usage: PRC stream generation
 

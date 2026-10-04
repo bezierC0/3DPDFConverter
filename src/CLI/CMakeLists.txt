@@ -53,6 +53,12 @@ set_target_properties(3DPDFConverterCLI PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
+if(UNIX AND NOT APPLE)
+    set_target_properties(3DPDFConverterCLI PROPERTIES
+        INSTALL_RPATH "$ORIGIN/../lib"
+    )
+endif()
+
 # Use the same post-build deployment approach as the verified Qt_OCC project.
 if(WIN32 AND IS_COPY_DLLS)
     file(GLOB CONVERTER_LIBPRC_DLLS "${CMAKE_SOURCE_DIR}/3rdparty/libPRC/bin/*.dll")

@@ -4,8 +4,12 @@
 #include <exception>
 #include <string.h>
 
+#if defined(THREEDPDFCONVERTER_HAS_PRC_PDF_BACKEND)
 #ifdef _WIN32
 #include <oPRCFile.h>
+#else
+#include <prc/oPRCFile.h>
+#endif
 #include <vector>
 #include <array>
 #include <sstream>
@@ -82,14 +86,14 @@ void FreePrc(HPrcData prc) {
 
 } // extern "C"
 
-#else // Stub for non-Windows
+#else // Stub for unsupported platforms
 
 extern "C" {
 
 void WritePrc(HMeshData mesh, PrcSettings /*prcSettings*/, MaterialSettings /*materialSettings*/, HPrcData* outPrc, ExportResult* outResult) {
     if (!mesh || !outPrc || !outResult) return;
     outResult->code = RESULT_PRC_ERROR;
-    CoreTypes::SafeStrCopy(outResult->errorMessage, "PRC generation is only supported on Windows.");
+    CoreTypes::SafeStrCopy(outResult->errorMessage, "PRC generation is not supported on this platform.");
     *outPrc = nullptr;
 }
 
@@ -99,4 +103,4 @@ void FreePrc(HPrcData prc) {
 
 } // extern "C"
 
-#endif // _WIN32
+#endif // THREEDPDFCONVERTER_HAS_PRC_PDF_BACKEND

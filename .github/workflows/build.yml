@@ -1,4 +1,7 @@
-name: Build Windows Project
+name: Build 3DPDFConverter
+
+env:
+  RELEASE_VERSION: '0.2.0'
 
 on:
   push:
@@ -94,8 +97,8 @@ jobs:
     - name: Upload Windows release package
       uses: actions/upload-artifact@v4
       with:
-        name: 3DPDFConverter-0.1.0-windows-x64
-        path: build/3DPDFConverter-0.1.0-windows-x64.zip
+        name: 3DPDFConverter-${{ env.RELEASE_VERSION }}-windows-x64
+        path: build/3DPDFConverter-${{ env.RELEASE_VERSION }}-windows-x64.zip
         if-no-files-found: error
         retention-days: 30
 
@@ -110,18 +113,32 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libocct-data-exchange-dev libocct-draw-dev libocct-foundation-dev libocct-modeling-algorithms-dev libocct-modeling-data-dev libocct-ocaf-dev libocct-visualization-dev libtbb-dev rapidjson-dev
+        sudo apt-get install -y libocct-data-exchange-dev libocct-draw-dev libocct-foundation-dev libocct-modeling-algorithms-dev libocct-modeling-data-dev libocct-ocaf-dev libocct-visualization-dev libtbb-dev libhpdf-dev rapidjson-dev zlib1g-dev
         
     - name: Configure CMake
       run: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
         
     - name: Build
       run: |
         cd build
         cmake --build . --config Release --parallel $(nproc)
+
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+
+    - name: Package Linux release
+      run: cmake --build build --target package
+
+    - name: Upload Linux release package
+      uses: actions/upload-artifact@v4
+      with:
+        name: 3DPDFConverter-${{ env.RELEASE_VERSION }}-linux-x64
+        path: build/3DPDFConverter-${{ env.RELEASE_VERSION }}-linux-x64.tar.gz
+        if-no-files-found: error
+        retention-days: 30
 
   build-macos:
     runs-on: macos-15

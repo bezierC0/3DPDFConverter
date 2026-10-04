@@ -2,7 +2,9 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <string>
 
 namespace
 {
@@ -89,11 +91,22 @@ int main(int argc, char* argv[])
         return 7;
     }
 
+    std::ifstream output(outputPath, std::ios::binary);
+    char pdfHeader[5] = {};
+    output.read(pdfHeader, sizeof(pdfHeader));
+    if (output.gcount() != static_cast<std::streamsize>(sizeof(pdfHeader)) ||
+        std::string(pdfHeader, sizeof(pdfHeader)) != "%PDF-")
+    {
+        Converter_Destroy(converter);
+        std::cerr << "The converter output is not a PDF file.\n";
+        return 8;
+    }
+
     if (callbackState.progressCount == 0 || callbackState.logCount == 0)
     {
         Converter_Destroy(converter);
         std::cerr << "The converter did not invoke the registered callbacks.\n";
-        return 8;
+        return 9;
     }
 
     callbackState.cancelAtMesh = true;
@@ -114,7 +127,7 @@ int main(int argc, char* argv[])
     if (cancelledCode != CONVERTER_RESULT_CANCELLED || std::filesystem::exists(cancelledOutput))
     {
         std::cerr << "Callback cancellation did not stop the conversion cleanly.\n";
-        return 9;
+        return 10;
     }
 
     return 0;

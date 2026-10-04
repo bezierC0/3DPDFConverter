@@ -2,6 +2,14 @@
 
 All notable changes to 3DPDFConverter are documented in this file.
 
+## [0.2.0] - Unreleased
+
+### Added
+
+- Linux x64 PRC-based 3D PDF conversion using Asymptote PRC and libHaru.
+- Linux x64 `.tar.gz` release package.
+- Linux end-to-end STEP-to-PDF CI test with PDF signature validation.
+
 ## [0.1.0] - 2026-10-02
 
 Initial Windows x64 prerelease.

@@ -1,6 +1,6 @@
 # 3DPDFConverter
 
-Current release: **0.1.0 prerelease**. Windows x64 is the only platform currently verified for complete STEP-to-3D-PDF conversion.
+Current release: **0.1.0 prerelease**. Version 0.2.0 adds Linux x64 conversion and packaging and remains unreleased until its end-to-end CI test passes.
 
 3DPDFConverter converts STEP files into PRC-based 3D PDF documents. The conversion engine is delivered as a shared library, while a thin command-line application provides a simple process-based interface. An optional Qt GUI is available only for development and validation.
 
@@ -48,4 +48,6 @@ See [English User Manual](doc/USER_MANUAL.md) for the complete build, CLI, JSON,
 
 ## Current platform status
 
-The public API and core layout are designed for Windows, Linux, and macOS. The current bundled libPRC and modified libHaru binaries are Windows binaries, so working PRC-based 3D PDF generation is currently verified on Windows only. Linux and macOS require compatible builds of those dependencies before conversion can be enabled there.
+The public API and core layout are designed for Windows, Linux, and macOS. Windows uses the bundled libPRC and modified libHaru binaries. Linux builds Asymptote PRC 3.15 from a pinned source archive and uses the system libHaru package. macOS still uses the unsupported-platform exporter stubs.
+
+See [Linux Release Guide](doc/LINUX_RELEASE.md) for Linux runtime requirements, package verification, and the manual GitHub Release procedure.
