@@ -123,8 +123,15 @@ jobs:
         
     - name: Build
       run: |
-        cd build
-        cmake --build . --config Release --parallel $(nproc)
+        set -o pipefail
+        cmake --build build --config Release --parallel $(nproc) 2>&1 | tee build/linux-build.log
+        status=${PIPESTATUS[0]}
+        if [ "$status" -ne 0 ]; then
+          grep -E 'fatal error:|error:|undefined reference' build/linux-build.log | tail -n 20 | while IFS= read -r line; do
+            echo "::error title=Linux compiler error::$line"
+          done
+          exit "$status"
+        fi
 
     - name: Test
       run: ctest --test-dir build --output-on-failure
