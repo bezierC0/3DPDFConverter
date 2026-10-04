@@ -129,7 +129,7 @@ jobs:
         status=${PIPESTATUS[0]}
         set -e
         if [ "$status" -ne 0 ]; then
-          tail -n 30 build/linux-build.log | while IFS= read -r line; do
+          grep -B 2 -A 6 -E 'fatal error:|error:|undefined reference' build/linux-build.log | head -n 10 | while IFS= read -r line; do
             echo "::error title=Linux build output::$line"
           done
           exit "$status"
