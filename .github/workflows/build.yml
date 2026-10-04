@@ -127,8 +127,8 @@ jobs:
         cmake --build build --config Release --parallel $(nproc) 2>&1 | tee build/linux-build.log
         status=${PIPESTATUS[0]}
         if [ "$status" -ne 0 ]; then
-          grep -E 'fatal error:|error:|undefined reference' build/linux-build.log | tail -n 20 | while IFS= read -r line; do
-            echo "::error title=Linux compiler error::$line"
+          tail -n 30 build/linux-build.log | while IFS= read -r line; do
+            echo "::error title=Linux build output::$line"
           done
           exit "$status"
         fi
