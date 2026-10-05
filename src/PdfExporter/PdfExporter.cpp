@@ -4,7 +4,7 @@
 #include <exception>
 #include <string.h>
 
-#ifdef _WIN32
+#if defined(THREEDPDFCONVERTER_HAS_PRC_PDF_BACKEND)
 #include <hpdf.h>
 #include <hpdf_u3d.h>
 #include <string>
@@ -198,16 +198,16 @@ void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, E
 
 } // extern "C"
 
-#else // Stub for non-Windows
+#else // Stub for unsupported platforms
 
 extern "C" {
 
 void EmbedPrcToPdf(HPrcData prc, const char* outPdfPath, PdfSettings settings, ExportResult* outResult) {
     if (!prc || !outPdfPath || !outResult) return;
     outResult->code = RESULT_PDF_ERROR;
-    CoreTypes::SafeStrCopy(outResult->errorMessage, "PDF generation is only supported on Windows.");
+    CoreTypes::SafeStrCopy(outResult->errorMessage, "PDF generation is not supported on this platform.");
 }
 
 } // extern "C"
 
-#endif // _WIN32
+#endif // THREEDPDFCONVERTER_HAS_PRC_PDF_BACKEND

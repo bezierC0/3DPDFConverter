@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(Step3DPdfConverter VERSION 0.1.0 LANGUAGES CXX)
+project(Step3DPdfConverter VERSION 0.2.0 LANGUAGES CXX)
 
 # C++17 standard
 set(CMAKE_CXX_STANDARD 17)
@@ -251,6 +251,12 @@ if(BUILD_CONVERTER_SHARED)
     )
 endif()
 
+if(UNIX AND NOT APPLE)
+    install(TARGETS PRC
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+endif()
+
 # Install CLI executable
 if(BUILD_CONVERTER_CLI)
     install(TARGETS 3DPDFConverterCLI
@@ -295,11 +301,17 @@ if(WIN32)
     endif()
 
     set(CPACK_GENERATOR "ZIP")
+    set(CPACK_PACKAGE_FILE_NAME "3DPDFConverter-${PROJECT_VERSION}-windows-x64")
+elseif(UNIX AND NOT APPLE)
+    set(CPACK_GENERATOR "TGZ")
+    set(CPACK_PACKAGE_FILE_NAME "3DPDFConverter-${PROJECT_VERSION}-linux-x64")
+endif()
+
+if(WIN32 OR (UNIX AND NOT APPLE))
     set(CPACK_PACKAGE_NAME "3DPDFConverter")
     set(CPACK_PACKAGE_VENDOR "littleCatBaby")
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "STEP to PRC-based 3D PDF converter")
     set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-    set(CPACK_PACKAGE_FILE_NAME "3DPDFConverter-${PROJECT_VERSION}-windows-x64")
     include(CPack)
 endif()
 

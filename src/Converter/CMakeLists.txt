@@ -1,4 +1,24 @@
 # 3DPDFConverter - unified headless conversion library
+if(UNIX AND NOT APPLE)
+    if(CMAKE_VERSION VERSION_LESS 3.27)
+        message(FATAL_ERROR "Linux conversion requires CMake 3.27 or newer")
+    endif()
+
+    include(FetchContent)
+    FetchContent_Declare(
+        asymptote_prc
+        URL https://github.com/vectorgraphics/asymptote/archive/e4f9fe80bff8b20110aefa559b81eefc7e864781.tar.gz
+        URL_HASH SHA256=6eb3ddf0e25f582a93534e132a6d26917219730b4d763e803d35a1d662c9f54f
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        SOURCE_SUBDIR prc
+    )
+    set(BUILD_SHARED_LIBS ON)
+    FetchContent_MakeAvailable(asymptote_prc)
+
+    find_path(LIBHARU_INCLUDE_DIR NAMES hpdf.h REQUIRED)
+    find_library(LIBHARU_LIBRARY NAMES hpdf REQUIRED)
+endif()
+
 add_library(3DPDFConverter SHARED)
 
 target_sources(3DPDFConverter PRIVATE
@@ -44,6 +64,14 @@ if(WIN32)
         debug ${CMAKE_SOURCE_DIR}/3rdparty/zlib/lib/zlibd.lib
         ${CMAKE_SOURCE_DIR}/3rdparty/libharu-2.3.0/lib/libhpdf.lib
     )
+elseif(UNIX AND NOT APPLE)
+    target_include_directories(3DPDFConverter PRIVATE
+        ${LIBHARU_INCLUDE_DIR}
+    )
+    target_link_libraries(3DPDFConverter PRIVATE
+        PRC
+        ${LIBHARU_LIBRARY}
+    )
 endif()
 
 target_compile_definitions(3DPDFConverter PRIVATE
@@ -55,8 +83,20 @@ target_compile_definitions(3DPDFConverter PRIVATE
     EXPORTFACADE_LIBRARY
 )
 
+if(WIN32 OR (UNIX AND NOT APPLE))
+    target_compile_definitions(3DPDFConverter PRIVATE
+        THREEDPDFCONVERTER_HAS_PRC_PDF_BACKEND
+    )
+endif()
+
 set_target_properties(3DPDFConverter PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     OUTPUT_NAME "3DPDFConverter"
 )
+
+if(UNIX AND NOT APPLE)
+    set_target_properties(3DPDFConverter PROPERTIES
+        INSTALL_RPATH "$ORIGIN"
+    )
+endif()
