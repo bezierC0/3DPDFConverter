@@ -1,6 +1,6 @@
 # 3DPDFConverter
 
-Current release: **0.1.0 prerelease**. Version 0.2.0 adds Linux x64 conversion and packaging and remains unreleased until its end-to-end CI test passes.
+Current release: **0.2.0 prerelease**. This version adds Linux x64 conversion and packaging with an end-to-end CI test.
 
 3DPDFConverter converts STEP files into PRC-based 3D PDF documents. The conversion engine is delivered as a shared library, while a thin command-line application provides a simple process-based interface. An optional Qt GUI is available only for development and validation.
 
