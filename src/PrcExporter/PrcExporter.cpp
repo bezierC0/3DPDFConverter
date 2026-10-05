@@ -48,7 +48,7 @@ void WritePrc(HMeshData mesh, PrcSettings /*prcSettings*/, MaterialSettings mate
                 static_cast<uint32_t>(part.indices.size()),
                 reinterpret_cast<const uint32_t(*)[3]>(part.indices.data()),
                 mat,
-                0, nullptr, nullptr,
+                0, static_cast<const double(*)[3]>(nullptr), nullptr,
                 0, nullptr, nullptr,
                 0, nullptr, nullptr,
                 0, nullptr, nullptr,
