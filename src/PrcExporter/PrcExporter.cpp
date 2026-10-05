@@ -9,6 +9,9 @@
 #include <oPRCFile.h>
 #else
 #include <prc/oPRCFile.h>
+using prc::oPRCFile;
+using prc::PRCmaterial;
+using prc::RGBAColour;
 #endif
 #include <vector>
 #include <array>
